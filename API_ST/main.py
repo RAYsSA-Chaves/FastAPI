@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException, status, Response
-from models import StrangerThingsCharacters
+from models import StrangerThingsCharacters, StrangerThingsCharactersPatch
 
 app = FastAPI()
 
+# Criando os personagens
 characters = {
     1:
         {
@@ -205,14 +206,17 @@ characters = {
         }
 }
 
+# Teste
 @app.get("/")
 def teste():
     return { "Mensagem": "Funcionando!"}
 
-@app.get("/characters")
+# Puxar os personagens
+@app.get("/characters", description="Retorna todos os personagens", summary="Retorna todos os personagens")
 async def get_characters():
     return characters
 
+# Puxar personagem específico
 @app.get("/characters/{character_id}", description="Retorna um personagem com um ID específico ou retorna o erro 404", summary="Retorna um personagem específico")
 async def get_character(character_id: int):
     try:
@@ -221,12 +225,13 @@ async def get_character(character_id: int):
     except KeyError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                              detail="Personagem não encontrado")
-    
-@app.post("/characters", status_code=status.HTTP_201_CREATED)
+
+# Cria um personagem novo
+@app.post("/characters", status_code=status.HTTP_201_CREATED, description="Cria um novo personagem com ID válido", summary="Cria um novo personagem")
 async def post_character(character: StrangerThingsCharacters):
     character_dict = character.dict()
 
-    # Se o cliente mandou um id e ele não está sendo usado → aceita
+    # Se o id passado não está sendo usado -> aceita
     if character_dict.get("id") and character_dict["id"] not in characters:
         new_id = character_dict["id"]
     else:
@@ -237,27 +242,45 @@ async def post_character(character: StrangerThingsCharacters):
     characters[new_id] = character_dict
     return character_dict
 
-@app.put("/characters/{character_id}", status_code=status.HTTP_202_ACCEPTED)
+# Atualiza ou substitui um personagem
+@app.put("/characters/{character_id}", status_code=status.HTTP_202_ACCEPTED, description="Atualiza ou substitui um personagem específico ou retorna o erro 404", summary="Atualiza um personagem")
 async def put_character(character_id: int, character: StrangerThingsCharacters):
+    # Verificar se o id já existe para atualizar as infos do personagem
     if character_id in characters:
-    characters[character_id] = character.dict()
-    characters[character_id]["id"] = character_id
-    characters[character_id].pop("id", None)
-    return characters[character_id]
+        characters[character_id] = character.dict()
+        characters[character_id]["id"] = character_id  # evita passar um id diferente
+        return characters[character_id]
+    # Caso não exista -> erro
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                              detail="Personagem não encontrado")
-        
-@app.delete("/characters/{character_id}", status_code=status.HTTP_204_NO_CONTENT)
+
+# Deleta um personagem
+@app.delete("/characters/{character_id}", status_code=status.HTTP_204_NO_CONTENT, description="Deleta um personagem ou retorna o erro 404", summary="Deleta um personagem")
 async def delete_character(character_id: int):
     if character_id in characters:
         del characters[character_id]
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)  
+        
+# Permite atualizar apenas as infos que quiser do personagem
+@app.patch("/characters/{character_id}", status_code=status.HTTP_200_OK, description="Atualiza somente as infos desejadas personagem (não ele completo) ou retorna o erro 404", summary="Atualiza um personagem parcialmente")
+async def patch_character(character_id: int, character_patch: StrangerThingsCharactersPatch):
+    if character_id not in characters:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Personagem não encontrado")
 
+    patch_data = character_patch.dict(exclude_unset=True)  # pega só os campos enviados
+
+    # Atualiza apenas os campos enviados
+    for key, value in patch_data.items():
+        characters[character_id][key] = value
+
+    return characters[character_id]
+
+
+# Rodar o servidor quando o arquivo for rodado
 if __name__ == "__main__":
     import uvicorn
-
+    
     uvicorn.run("main:app", host="127.0.0.1", port=8002, log_level="info", reload=True)
-
