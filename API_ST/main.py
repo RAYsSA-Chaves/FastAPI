@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException, status, Response
 from models import StrangerThingsCharacters
-import requests
 
 app = FastAPI()
 
@@ -225,21 +224,26 @@ async def get_character(character_id: int):
     
 @app.post("/characters", status_code=status.HTTP_201_CREATED)
 async def post_character(character: StrangerThingsCharacters):
-    next_id = len(characters) + 1
+    character_dict = character.dict()
 
-    characters[next_id] = character
+    # Se o cliente mandou um id e ele não está sendo usado → aceita
+    if character_dict.get("id") and character_dict["id"] not in characters:
+        new_id = character_dict["id"]
+    else:
+        # Caso contrário, gera o próximo disponível
+        new_id = len(characters) + 1
 
-    del character.id
-
-    return character
+    character_dict["id"] = new_id
+    characters[new_id] = character_dict
+    return character_dict
 
 @app.put("/characters/{character_id}", status_code=status.HTTP_202_ACCEPTED)
 async def put_character(character_id: int, character: StrangerThingsCharacters):
     if character_id in characters:
-        characters[character_id] = character
-        character.id = character_id
-        del character.id
-        return character
+    characters[character_id] = character.dict()
+    characters[character_id]["id"] = character_id
+    characters[character_id].pop("id", None)
+    return characters[character_id]
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                              detail="Personagem não encontrado")
@@ -256,3 +260,4 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("main:app", host="127.0.0.1", port=8002, log_level="info", reload=True)
+
