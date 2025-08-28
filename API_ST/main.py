@@ -234,7 +234,7 @@ async def post_character(character: StrangerThingsCharacters):
     return character
 
 @app.put("/characters/{character_id}", status_code=status.HTTP_202_ACCEPTED)
-async def put_character(character_id: int, characters: StrangerThingsCharacters):
+async def put_character(character_id: int, character: StrangerThingsCharacters):
     if character_id in characters:
         characters[character_id] = character
         character.id = character_id
@@ -244,14 +244,15 @@ async def put_character(character_id: int, characters: StrangerThingsCharacters)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                              detail="Personagem não encontrado")
         
-@app.delete("/characters/[character_id]", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/characters/{character_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_character(character_id: int):
     if character_id in characters:
         del characters[character_id]
-        return Response(status_code=HTTP_204_NO_CONTENT)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)  
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", host="127.0.0.1", port=8002, log_level="info", reload=True)
