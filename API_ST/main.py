@@ -1,7 +1,11 @@
 from fastapi import FastAPI, HTTPException, status, Response
 from models import StrangerThingsCharacters, StrangerThingsCharactersPatch
 
-app = FastAPI()
+app = FastAPI(
+    title= "Stranger Things API",
+    description= "API dos personagens da melhor série!",
+    version= "1.0.0",
+)
 
 # Criando os personagens
 characters = {
@@ -223,8 +227,7 @@ async def get_character(character_id: int):
         character = characters[character_id]
         return character
     except KeyError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                             detail="Personagem não encontrado")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Personagem não encontrado")
 
 # Cria um personagem novo
 @app.post("/characters", status_code=status.HTTP_201_CREATED, description="Cria um novo personagem com ID válido", summary="Cria um novo personagem")
@@ -252,8 +255,7 @@ async def put_character(character_id: int, character: StrangerThingsCharacters):
         return characters[character_id]
     # Caso não exista -> erro
     else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                             detail="Personagem não encontrado")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Personagem não encontrado")
 
 # Deleta um personagem
 @app.delete("/characters/{character_id}", status_code=status.HTTP_204_NO_CONTENT, description="Deleta um personagem ou retorna o erro 404", summary="Deleta um personagem")
@@ -265,7 +267,7 @@ async def delete_character(character_id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)  
         
 # Permite atualizar apenas as infos que quiser do personagem
-@app.patch("/characters/{character_id}", status_code=status.HTTP_200_OK, description="Atualiza somente as infos desejadas personagem (não ele completo) ou retorna o erro 404", summary="Atualiza um personagem parcialmente")
+@app.patch("/characters/{character_id}", status_code=status.HTTP_200_OK, description="Atualiza somente as infos desejadas do personagem (não ele completo) ou retorna o erro 404", summary="Atualiza um personagem parcialmente")
 async def patch_character(character_id: int, character_patch: StrangerThingsCharactersPatch):
     if character_id not in characters:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Personagem não encontrado")
