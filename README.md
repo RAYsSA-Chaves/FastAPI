@@ -1,2 +1,2 @@
 # FastAPI_Testes
-Aprendendo a mexer com FasAPI.
+Aprendendo a mexer com FastAPI.
