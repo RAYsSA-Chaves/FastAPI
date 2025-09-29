@@ -1,1 +1,1 @@
-from models.turmas_models import TurmasModel
+from models.turmas_models import TurmasModel;
